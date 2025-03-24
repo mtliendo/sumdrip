@@ -21,7 +21,7 @@ function Home() {
 							and preferences.
 						</p>
 						<Link
-							to="/describe-self"
+							to="/profile"
 							className="btn btn-primary bg-base-100 text-primary-content"
 						>
 							Get Started
@@ -124,7 +124,7 @@ function Home() {
 				</div>
 
 				<div className="text-center mt-12">
-					<Link to="/describe-self" className="btn btn-primary btn-lg">
+					<Link to="/profile" className="btn btn-primary btn-lg">
 						Start Your Style Journey
 					</Link>
 				</div>

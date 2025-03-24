@@ -10,6 +10,9 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@aws-amplify/ui-react": "^6.9.4",
+		"@aws-amplify/ui-react-storage": "^3.9.0",
+		"@aws-sdk/util-dynamodb": "^3.772.0",
 		"@tailwindcss/postcss": "^4.0.14",
 		"@tailwindcss/vite": "^4.0.14",
 		"aws-amplify": "^6.13.5",
@@ -17,6 +20,7 @@
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"react-router": "^7.3.0",
+		"resend": "^4.1.2",
 		"tailwindcss": "^4.0.14"
 	},
 	"devDependencies": {
@@ -36,6 +40,7 @@
 		"eslint-plugin-react-hooks": "^5.1.0",
 		"eslint-plugin-react-refresh": "^0.4.19",
 		"globals": "^15.15.0",
+		"sharp": "^0.33.5",
 		"tsx": "^4.19.3",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.24.1",

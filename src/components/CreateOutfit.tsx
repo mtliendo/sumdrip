@@ -1,4 +1,6 @@
-import { useState, useRef } from 'react'
+import { FileUploader, StorageImage } from '@aws-amplify/ui-react-storage'
+import { getUrl } from 'aws-amplify/storage'
+import { useState } from 'react'
 
 interface UserImage {
 	id: string
@@ -8,40 +10,31 @@ interface UserImage {
 
 interface CreateOutfitProps {
 	userImages: UserImage[]
-	onOutfitGenerated: (outfitImage: string) => void
+	onOutfitGenerated: (outfitCompositionURLs: Record<string, string>) => void
+	generatedOutfit: string | null
 }
 
-function CreateOutfit({ userImages, onOutfitGenerated }: CreateOutfitProps) {
+function CreateOutfit({
+	userImages,
+	onOutfitGenerated,
+	generatedOutfit,
+}: CreateOutfitProps) {
 	const [isUploading, setIsUploading] = useState(false)
 	const [selectedImage, setSelectedImage] = useState<string | null>(null)
 	const [uploadedImage, setUploadedImage] = useState<string | null>(null)
-	const [generatedOutfit, setGeneratedOutfit] = useState<string | null>(null)
-	const fileInputRef = useRef<HTMLInputElement>(null)
+	const [outfitCompositionURLs, setOutfitCompositionURLs] = useState<
+		Record<string, string>
+	>({
+		base: '',
+		garment: '',
+	})
 
-	const handleImageSelect = (imageUrl: string) => {
-		setSelectedImage(imageUrl)
+	const handleImageSelect = (imagePath: string) => {
+		console.log('imagePath', imagePath)
+		setSelectedImage(imagePath)
 	}
 
-	const handleUploadClick = () => {
-		fileInputRef.current?.click()
-	}
-
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.files && e.target.files[0]) {
-			const file = e.target.files[0]
-			const reader = new FileReader()
-
-			reader.onload = (event) => {
-				if (event.target?.result) {
-					setUploadedImage(event.target.result as string)
-				}
-			}
-
-			reader.readAsDataURL(file)
-		}
-	}
-
-	const handleCreateOutfit = () => {
+	const handleCreateOutfit = async () => {
 		if (!selectedImage) {
 			alert('Please select a base image first')
 			return
@@ -54,23 +47,45 @@ function CreateOutfit({ userImages, onOutfitGenerated }: CreateOutfitProps) {
 
 		setIsUploading(true)
 
-		// Mock outfit generation based on selected image + uploaded image
-		// In a real app, this would call an API with both images
-		setTimeout(() => {
-			// For demo purposes, we're using a mock image
-			const MOCK_OUTFIT_IMAGE =
-				'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
-			setGeneratedOutfit(MOCK_OUTFIT_IMAGE)
+		try {
+			const baseImage = await getUrl({
+				path: selectedImage,
+			})
+			const garmentImage = await getUrl({
+				path: uploadedImage,
+			})
+
+			console.log('baseImage', baseImage)
+			console.log('garmentImage', garmentImage)
+			console.log('baseImageUrl', baseImage.url.toString())
+			console.log('garmentImageUrl', garmentImage.url.toString())
+			setOutfitCompositionURLs({
+				base: baseImage.url.toString(),
+				garment: garmentImage.url.toString(),
+			})
+		} catch (error) {
+			console.error('Error generating outfit:', error)
+		} finally {
 			setIsUploading(false)
-		}, 2000)
+		}
 	}
 
 	const handleSendOutfit = () => {
-		if (generatedOutfit) {
-			onOutfitGenerated(generatedOutfit)
-			setGeneratedOutfit(null)
+		if (outfitCompositionURLs) {
+			onOutfitGenerated(outfitCompositionURLs)
+			setOutfitCompositionURLs({
+				base: '',
+				garment: '',
+			})
 			setSelectedImage(null)
 			setUploadedImage(null)
+		}
+	}
+
+	const handleUploadSuccess = (result: { key?: string }) => {
+		console.log('Upload successful:', result)
+		if (result.key) {
+			setUploadedImage(result.key)
 		}
 	}
 
@@ -87,8 +102,8 @@ function CreateOutfit({ userImages, onOutfitGenerated }: CreateOutfitProps) {
 							}`}
 							onClick={() => handleImageSelect(image.url)}
 						>
-							<img
-								src={image.url}
+							<StorageImage
+								path={image.url}
 								alt={image.type}
 								className="w-full h-full object-cover"
 							/>
@@ -99,29 +114,12 @@ function CreateOutfit({ userImages, onOutfitGenerated }: CreateOutfitProps) {
 
 			<div className="mb-6">
 				<h3 className="font-medium mb-2">Upload Your Image</h3>
-				<input
-					type="file"
-					className="hidden"
-					ref={fileInputRef}
-					onChange={handleFileChange}
-					accept="image/*"
+				<FileUploader
+					path={'stylist-images/catalog/'}
+					acceptedFileTypes={['image/*']}
+					maxFileCount={1}
+					onUploadSuccess={handleUploadSuccess}
 				/>
-				<button
-					className="btn btn-secondary btn-sm w-full mb-2"
-					onClick={handleUploadClick}
-				>
-					Upload Image
-				</button>
-
-				{uploadedImage && (
-					<div className="aspect-square rounded-lg overflow-hidden mb-2">
-						<img
-							src={uploadedImage}
-							alt="Uploaded image"
-							className="w-full h-full object-cover"
-						/>
-					</div>
-				)}
 			</div>
 
 			<div className="mb-6">
@@ -130,14 +128,16 @@ function CreateOutfit({ userImages, onOutfitGenerated }: CreateOutfitProps) {
 					onClick={handleCreateOutfit}
 					disabled={isUploading || !selectedImage || !uploadedImage}
 				>
-					{isUploading ? 'Generating...' : 'Create Outfit'}
+					{isUploading ? 'Generating...' : 'Generate Outfit'}
 				</button>
 
 				{generatedOutfit && (
 					<div className="mt-2">
 						<div className="aspect-square rounded-lg overflow-hidden mb-2">
 							<img
-								src={generatedOutfit}
+								src={
+									'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+								}
 								alt="Generated outfit"
 								className="w-full h-full object-cover"
 							/>

@@ -1,7 +1,79 @@
 import { Link } from 'react-router'
 import ThemeController from './ThemeController'
+import { useAuthenticator } from '@aws-amplify/ui-react'
+import { useEffect, useState } from 'react'
+import { fetchAuthSession } from 'aws-amplify/auth'
+import { generateClient } from 'aws-amplify/api'
+import { Schema } from '../../amplify/data/resource'
+
+const client = generateClient<Schema>()
 
 function Navbar() {
+	const { user, signOut } = useAuthenticator((context) => [context.user])
+	const [isStylist, setIsStylist] = useState(false)
+	const [hasRoom, setHasRoom] = useState(false)
+	const [roomId, setRoomId] = useState<string | null>(null)
+
+	useEffect(() => {
+		async function checkUserRole() {
+			if (!user) return
+
+			try {
+				const session = await fetchAuthSession()
+				const groups =
+					(session.tokens?.idToken?.payload['cognito:groups'] as string[]) || []
+				const isStylistUser = groups.includes('stylist')
+				setIsStylist(isStylistUser)
+			} catch (error) {
+				console.error('Error checking user role:', error)
+			}
+		}
+
+		checkUserRole()
+	}, [user])
+
+	useEffect(() => {
+		async function checkClientRoom() {
+			if (!user || isStylist) return
+
+			try {
+				const clientsResult = await client.models.Client.list()
+				if (clientsResult.data && clientsResult.data.length > 0) {
+					const clientId = clientsResult.data[0].id
+
+					// Get rooms for this client
+					const roomsResult = await client.models.Room.list({
+						filter: { clientId: { eq: clientId } },
+					})
+
+					if (roomsResult.data && roomsResult.data.length > 0) {
+						setHasRoom(true)
+						setRoomId(roomsResult.data[0].id)
+					} else {
+						setHasRoom(false)
+						setRoomId(null)
+					}
+				}
+			} catch (error) {
+				console.error('Error fetching client room:', error)
+			}
+		}
+
+		checkClientRoom()
+	}, [user, isStylist])
+
+	const getChatLink = () => {
+		if (isStylist) {
+			return '/rooms'
+		} else if (hasRoom && roomId) {
+			return `/rooms/${roomId}`
+		} else {
+			return null
+		}
+	}
+
+	const chatLink = getChatLink()
+
 	return (
 		<div className="navbar bg-base-100 shadow-sm w-full">
 			<div className="navbar-start">
@@ -27,14 +99,13 @@ function Navbar() {
 						className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
 					>
 						<li>
-							<Link to="/">Home</Link>
+							<Link to="/profile">Profile</Link>
 						</li>
-						<li>
-							<Link to="/describe-self">Style Profile</Link>
-						</li>
-						<li>
-							<Link to="/chat">Chat</Link>
-						</li>
+						{chatLink && (
+							<li>
+								<Link to={chatLink}>{isStylist ? 'Rooms' : 'Chat'}</Link>
+							</li>
+						)}
 					</ul>
 				</div>
 				<Link to="/" className="btn btn-ghost text-xl font-bold">
@@ -44,26 +115,31 @@ function Navbar() {
 
 			<div className="navbar-center hidden md:flex">
 				<ul className="menu menu-horizontal px-1">
-					<li>
-						<Link to="/">Home</Link>
-					</li>
-					<li>
-						<Link to="/describe-self">Style Profile</Link>
-					</li>
-					<li>
-						<Link to="/chat">Chat</Link>
-					</li>
+					{chatLink && (
+						<li>
+							<Link to={chatLink}>{isStylist ? 'Rooms' : 'Chat'}</Link>
+						</li>
+					)}
 				</ul>
 			</div>
 
 			<div className="navbar-end">
 				<div className="flex flex-row gap-2">
-					<Link
-						to="/describe-self"
-						className="btn btn-primary btn-sm md:btn-md"
-					>
-						Get Started
+					<Link to="/profile" className="btn btn-ghost btn-sm md:btn-md">
+						Profile
 					</Link>
+					{user ? (
+						<button
+							onClick={signOut}
+							className="btn btn-primary btn-sm md:btn-md"
+						>
+							Sign Out
+						</button>
+					) : (
+						<Link to="/profile" className="btn btn-primary btn-sm md:btn-md">
+							Sign In
+						</Link>
+					)}
 					<ThemeController />
 				</div>
 			</div>
