@@ -9,6 +9,12 @@ export const handler: DynamoDBStreamHandler = async (event) => {
 
 	for (const record of event.Records) {
 		try {
+			// Only process INSERT events
+			if (record.eventName !== 'INSERT') {
+				console.log(`Skipping non-INSERT event: ${record.eventName}`)
+				continue
+			}
+
 			if (!record.dynamodb || !record.dynamodb.NewImage) {
 				console.warn('Record missing dynamodb.NewImage data:', record.eventID)
 				return
@@ -40,7 +46,9 @@ export const handler: DynamoDBStreamHandler = async (event) => {
 					stylistOwner,
 					clientOwner,
 					clientName,
-					stylistName
+					stylistName,
+					clientItem.id as string,
+					stylist.id as string
 				)
 
 				if (!room) {

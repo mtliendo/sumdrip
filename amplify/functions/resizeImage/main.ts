@@ -14,10 +14,12 @@ export const handler: S3Handler = async (event) => {
 
 	for (const key of objectKeys) {
 		//fetch the image from s3
+		const decodedKey = decodeURIComponent(key)
+		console.log(`Fetching image from s3 for key: ${decodedKey}`)
 		const image = await s3Client.send(
 			new GetObjectCommand({
 				Bucket: env.SUMDRIP_BUCKET_NAME,
-				Key: key,
+				Key: decodedKey,
 			})
 		)
 
@@ -38,7 +40,7 @@ export const handler: S3Handler = async (event) => {
 		// store the resized image in s3
 		const command = new PutObjectCommand({
 			Bucket: env.SUMDRIP_BUCKET_NAME,
-			Key: `resized/${key}`,
+			Key: `resized/${decodedKey}`,
 			Body: resizedImageBuffer,
 		})
 		await s3Client.send(command)

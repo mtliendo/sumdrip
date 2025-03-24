@@ -19,11 +19,15 @@ export const createRoom = async (
 	stylistOwnerId: string,
 	clientOwnerId: string,
 	clientName: string,
-	stylistName: string
+	stylistName: string,
+	clientId: string,
+	stylistId: string
 ) => {
 	const room = await client.models.Room.create({
 		name: `${clientName} and ${stylistName}`,
 		owners: [clientOwnerId, stylistOwnerId],
+		clientId: clientId,
+		stylistId: stylistId,
 	})
 
 	return room.data

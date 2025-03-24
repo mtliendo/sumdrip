@@ -42,7 +42,7 @@ export const handler: Handler = async (event: { body: string }) => {
 	console.log('Event:', event)
 	const parsedEvent: FashnWebhookEvent = JSON.parse(event.body)
 	try {
-		await events.post('fashn/channel', parsedEvent)
+		await events.post(`fashn/${parsedEvent.id}`, parsedEvent)
 
 		const response = await fetch(parsedEvent.output[0])
 		const imageBuffer = await response.arrayBuffer()

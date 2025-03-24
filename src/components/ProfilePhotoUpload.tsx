@@ -54,9 +54,10 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 						handleImageUpload('fullBodyImage', fileInfo)
 					}
 				/>
+
 				{fullBodyImage && (
 					<StorageImage
-						path={fullBodyImage}
+						path={`resized/${fullBodyImage}`}
 						alt="Full Body Image"
 						style={{ width: '200px', height: 'auto' }}
 					/>
@@ -80,7 +81,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 				/>
 				{halfBodyImage && (
 					<StorageImage
-						path={halfBodyImage}
+						path={decodeURIComponent(`resized/${halfBodyImage}`)}
 						alt="Half Body Image"
 						style={{ width: '200px', height: 'auto' }}
 					/>
@@ -89,5 +90,6 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 		</div>
 	)
 }
-
+//client-images/full-body/us-east-1:c42b299d-56f8-cab5-e38b-349a01585870/me-selfie.jpeg
+//resized/client-images/full-body/us-east-1%3Ac42b299d-56f8-cab5-e38b-349a01585870/me-selfie.jpeg
 export default ProfilePhotoUpload

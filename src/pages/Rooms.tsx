@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Authenticator } from '@aws-amplify/ui-react'
 import { generateClient } from 'aws-amplify/api'
 import { Schema } from '../../amplify/data/resource'
-import { fetchAuthSession } from 'aws-amplify/auth'
 import { Link, Outlet, useParams, Navigate } from 'react-router'
+import { useUserGroup } from '../hooks/useUserGroup'
 
 const client = generateClient<Schema>()
 
@@ -17,35 +17,8 @@ type Room = {
 
 function Rooms() {
 	const [rooms, setRooms] = useState<Room[]>([])
-	const [isLoading, setIsLoading] = useState(true)
-	const [isStylist, setIsStylist] = useState(false)
+	const { isInGroup: isStylist, isLoading } = useUserGroup('stylist')
 	const { roomId } = useParams<{ roomId: string }>()
-
-	// Check if user is stylist
-	useEffect(() => {
-		async function checkUserRole() {
-			try {
-				const session = await fetchAuthSession()
-				const groups =
-					(session.tokens?.idToken?.payload['cognito:groups'] as string[]) || []
-				const isStylistUser = groups.includes('stylist')
-				setIsStylist(isStylistUser)
-
-				if (!isStylistUser) {
-					// If not stylist and no roomId is provided, navigate to /profile
-					if (!roomId) {
-						// We'll redirect in the render method
-					}
-				}
-			} catch (error) {
-				console.error('Error checking user role:', error)
-			} finally {
-				setIsLoading(false)
-			}
-		}
-
-		checkUserRole()
-	}, [roomId])
 
 	// Fetch rooms if stylist
 	useEffect(() => {

@@ -34,6 +34,7 @@ export const handler: Schema['generateFashionImage']['functionHandler'] =
 		if (response.ok) {
 			return {
 				success: true,
+				id: data.id,
 			}
 		} else {
 			return {

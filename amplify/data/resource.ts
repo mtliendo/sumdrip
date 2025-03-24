@@ -10,6 +10,13 @@ const schema = a
 				email: a.email().required(),
 			})
 			.authorization((allow) => [allow.owner().to(['read', 'create'])]),
+		Catalog: a
+			.model({
+				name: a.string().required(),
+				description: a.string().required(),
+				imageId: a.id().required(),
+			})
+			.authorization((allow) => [allow.group('stylist')]),
 		Client: a
 			.model({
 				name: a.string().required(),
@@ -34,8 +41,8 @@ const schema = a
 			.model({
 				name: a.string().required(), //* Name of the client and stylist
 				messages: a.hasMany('Message', 'roomId'),
-				clientId: a.id(),
-				stylistId: a.id(),
+				clientId: a.id().required(),
+				stylistId: a.id().required(),
 				owners: a.string().array().required(),
 			})
 			.authorization((allow) => [
@@ -44,7 +51,7 @@ const schema = a
 			]),
 		Message: a
 			.model({
-				userId: a.string().required(),
+				userType: a.enum(['client', 'stylist']),
 				text: a.string(),
 				imageId: a.string(),
 				roomId: a.string().required(),
@@ -60,7 +67,7 @@ const schema = a
 				baseImageUrl: a.url().required(),
 				garmentImageUrl: a.url().required(),
 			})
-			.returns(a.customType({ success: a.boolean() }))
+			.returns(a.customType({ success: a.boolean(), id: a.string() }))
 			.handler(a.handler.function(generateFashionItem))
 			.authorization((allow) => [allow.group('stylist')]),
 	})

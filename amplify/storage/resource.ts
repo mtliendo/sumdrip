@@ -35,6 +35,10 @@ export const storage = defineStorage({
 			allow.groups(['stylist']).to(['read']),
 			allow.resource(fashnWebhook).to(['write']),
 		],
-		'chat-images/roomId/*': [allow.authenticated.to(['read', 'write'])],
+		'chat-images/*': [
+			allow.authenticated.to(['read', 'write']),
+			allow.groups(['stylist']).to(['read', 'write']),
+			allow.entity('identity').to(['read', 'write']),
+		],
 	}),
 })

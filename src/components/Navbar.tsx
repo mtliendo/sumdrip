@@ -2,35 +2,18 @@ import { Link } from 'react-router'
 import ThemeController from './ThemeController'
 import { useAuthenticator } from '@aws-amplify/ui-react'
 import { useEffect, useState } from 'react'
-import { fetchAuthSession } from 'aws-amplify/auth'
 import { generateClient } from 'aws-amplify/api'
 import { Schema } from '../../amplify/data/resource'
+import { useUserGroup } from '../hooks/useUserGroup'
 
 const client = generateClient<Schema>()
 
 function Navbar() {
 	const { user, signOut } = useAuthenticator((context) => [context.user])
-	const [isStylist, setIsStylist] = useState(false)
+
 	const [hasRoom, setHasRoom] = useState(false)
 	const [roomId, setRoomId] = useState<string | null>(null)
-
-	useEffect(() => {
-		async function checkUserRole() {
-			if (!user) return
-
-			try {
-				const session = await fetchAuthSession()
-				const groups =
-					(session.tokens?.idToken?.payload['cognito:groups'] as string[]) || []
-				const isStylistUser = groups.includes('stylist')
-				setIsStylist(isStylistUser)
-			} catch (error) {
-				console.error('Error checking user role:', error)
-			}
-		}
-
-		checkUserRole()
-	}, [user])
+	const { isInGroup: isStylist } = useUserGroup('stylist')
 
 	useEffect(() => {
 		async function checkClientRoom() {
@@ -99,7 +82,11 @@ function Navbar() {
 						className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
 					>
 						<li>
-							<Link to="/profile">Profile</Link>
+							{isStylist ? (
+								<Link to="/catalog">Catalog</Link>
+							) : (
+								<Link to="/profile">Profile</Link>
+							)}
 						</li>
 						{chatLink && (
 							<li>
@@ -125,9 +112,15 @@ function Navbar() {
 
 			<div className="navbar-end">
 				<div className="flex flex-row gap-2">
-					<Link to="/profile" className="btn btn-ghost btn-sm md:btn-md">
-						Profile
-					</Link>
+					{isStylist ? (
+						<Link to="/catalog" className="btn btn-ghost btn-sm md:btn-md">
+							Catalog
+						</Link>
+					) : (
+						<Link to="/profile" className="btn btn-ghost btn-sm md:btn-md">
+							Profile
+						</Link>
+					)}
 					{user ? (
 						<button
 							onClick={signOut}
